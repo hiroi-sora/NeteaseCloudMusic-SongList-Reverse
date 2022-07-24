@@ -11,6 +11,7 @@
 
 (function() {
     'use strict';
+    console.log("歌单逆序 脚本加载。")
 
     // 默认操作间隔时间，毫秒
     var defaultIntervalTime=100;
@@ -57,12 +58,12 @@
             else{
                 const msg=msgNodes[0].data;
                 if(msg=="收藏成功"||msg=="歌曲已存在！"){
-                    console.log("第"+(songIndex+1)+"/"+aLen+"添加成功")
+                    console.log("第"+(songIndex+1)+"/"+aLen+"添加成功");
                     errWaitTime=defaultErrWaitTime;
                     setTimeout(()=>{addSong(songIndex+1)},intervalTime); // 添加下一首
                 }else{
-                    console.log("第"+(songIndex+1)+"/"+aLen+"添加失败，msg："+msg)
-                    console.log("    将在"+errWaitTime+"毫秒后重试")
+                    console.log("第"+(songIndex+1)+"/"+aLen+"添加失败，msg："+msg);
+                    console.log("    将在"+errWaitTime+"毫秒后重试");
                     setTimeout(()=>{addSong(songIndex)},(intervalTime+errWaitTime)); // 重试添加本首
                     errWaitTime+=defaultErrWaitTimeAdd;
                 }
@@ -116,7 +117,11 @@
     window.onload=function(){
         // 添加按钮
         const addBtn=()=>{
-            let btnsNode=getNodeXpath("/html/body/div[3]/div/div[2]/div/div[1]/div[1]/div/div[2]/div/div[3]",window.frames.contentFrame.document);
+            // let btnsNode=getNodeXpath("/html/body/div[3]/div/div[2]/div/div[1]/div[1]/div/div[2]/div/div[3]",window.frames.contentFrame.document);
+            let btnsNode=getNodeXpath("/html/body/div[3]/div/div[2]/div/div[1]/div[1]/div/div[2]/div/div[2]",window.frames.contentFrame.document);
+            if(btnsNode.length===0){
+                btnsNode=getNodeXpath("/html/body/div[3]/div[1]/div/div/div[1]/div[2]/div/div[2]",window.frames.contentFrame.document);
+            }
             if(btnsNode.length===0) return;
             else btnsNode=btnsNode[0];
             let btn=document.createElement("div");
