@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         网易云歌单逆序
+// @name         网易云逆序器初始化
 // @namespace    http://tampermonkey.net/
 // @version      0.1.0
 // @description  将当前歌单的歌曲以逆序加入另一个歌单
@@ -11,7 +11,7 @@
 
 (function() {
     'use strict';
-    console.log("歌单逆序 脚本加载。")
+    console.log("逆序器初始化1：脚本加载")
 
     // 默认操作间隔时间，毫秒
     var defaultIntervalTime=100;
@@ -23,6 +23,14 @@
     const defaultErrWaitTime=15000;
     // 默认失败重试延时增幅
     const defaultErrWaitTimeAdd=5000;
+    // 等待元素加载 探测间隔
+    const waitLoadInterval=50;
+    // 等待元素加载 探测次数
+    const waitLoadTimes=200;
+
+    // iframe，动态获取
+    var contentFrame;
+
 
     // 通过xpath获取节点
     const getNodeXpath=(xpath,document,contextNode=null)=>{
@@ -32,6 +40,103 @@
         while (xres=xresult.iterateNext()) { xnodes.push(xres); }
         return xnodes;
     }
+
+    // 反复执行getFunc直到返回非false，然后执行workFunc
+    const tryFunc=(getFunc,workFunc)=>{
+        // 执行第一次
+        const data=getFunc();
+        if(data){ // 空数组是true，因此workFunc内要先将空数组转布尔
+            workFunc(data);
+            return;
+        }
+        // 反复尝试执行
+        let nowTimes=1; // 尝试次数
+        let timer=setInterval(()=>{
+            const data=getFunc();
+            if(data){
+                console.log("    尝试：成功，次数"+nowTimes)
+                clearInterval(timer);
+                workFunc(data);
+            }
+            else if(++nowTimes>waitLoadTimes){ // 超过次数
+                console.log("    尝试：失败次数超限。"+getFunc)
+                clearInterval(timer);
+            }
+        },waitLoadInterval);
+    }
+
+    // 等待xpath元素加载，成功则执行func
+    const waitLoadXpath=(xpath,document,func,contextNode=null)=>{
+        const getNode=()=>{
+            const node=getNodeXpath(xpath,document,contextNode);
+            return node.length==0?false:node; // 空数组转布尔
+        }
+        tryFunc(getNode,func);
+    }
+
+    // 初始化
+    const init=()=>{
+        // 1.尝试获取contentFrame
+        const getContentFrame=()=>{
+            try {
+                return window.frames.contentFrame.document;
+            }
+            catch(err){
+                return false
+            }
+        }
+        const workFunc=(f)=>{
+            contentFrame=f;
+            console.log("逆序器初始化2：获取contentFrame");
+            // 2.尝试获取按钮板
+            const btnsWorkFunc=(node)=>{
+                console.log("逆序器初始化3：获取按钮板");
+                // 3.添加按钮和监听按钮被移除
+                const btnsNode=node[0];
+                const addMyBtn=()=>{
+                    if(getNodeXpath('//*[@id="flag_reverse"]',contentFrame).length!=0){
+                        return; // 检查按钮是否已存在，是则不再添加
+                    }
+                    console.log("逆序器初始化4：添加按钮")
+                    let btn=document.createElement("div");
+                    btn.innerHTML='<a id="flag_reverse" class="u-btni u-btni-fav u-btni-fav-dis1"><i>逆序</i></a>';
+                    btn.onclick=readyReverseSongList;
+                    btnsNode.appendChild(btn);
+                }
+                addMyBtn(); // 添加一次
+                // 配置监听按钮板变化，若按钮被移除则再次添加
+                btnsNode.addEventListener('DOMSubtreeModified', ()=>addMyBtn(), false);
+                readyReverseSongList() // todo:test
+            }
+            waitLoadXpath('//*[@class="btns f-cb"]',contentFrame,btnsWorkFunc)
+        }
+        tryFunc(getContentFrame,workFunc);
+    }
+    init();
+
+    // 前期准备
+    const readyReverseSongList=()=>{
+        // 1.获取并按下第一首歌的收藏按钮
+        const btnsWorkFunc=(node)=>{
+            console.log("逆序器准备1：获取第一首歌按钮");
+            node[0].click();
+            // 2.删除“+新歌单”栏
+            const newListNode=getNodeXpath('//div[@class="zcnt"]/div/div[@class="tit j-flag"]',contentFrame)
+            if(newListNode.length){
+                console.log("逆序器准备1.1：删除“+新歌单”栏");
+                newListNode[0].remove();
+            }
+            const addSongListClickListener=(songListNode)=>{
+                console.log("逆序器准备2：为每个歌单栏添加监听器");
+                console.log(songListNode);
+                // TODO!!!
+            }
+            waitLoadXpath('//div[@class="zcnt"]/div/div[@class="j-flag"]/ul/li',contentFrame,addSongListClickListener)
+        }
+        waitLoadXpath("//tbody/tr[1]/td[3]/div/span[1]",contentFrame,btnsWorkFunc)
+    }
+
+    return; // 旧===================================================================
 
     // 执行逆序添加歌曲
     const goReverseSongList=(listIndex)=>{
@@ -115,6 +220,7 @@
 
     // 等页面加载完后开始执行初始化
     window.onload=function(){
+        waitLoadXpath('//*[@class="btns f-cb"]',window.frames.contentFrame.document,testFun);
         // 添加按钮
         const addBtn=()=>{
             // let btnsNode=getNodeXpath("/html/body/div[3]/div/div[2]/div/div[1]/div[1]/div/div[2]/div/div[3]",window.frames.contentFrame.document);
