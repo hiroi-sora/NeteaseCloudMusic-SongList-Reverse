@@ -6,6 +6,7 @@
 
 1. 您的浏览器需要事先安装好 [油猴（Tampermonkey）](https://www.tampermonkey.net/index.php) 插件。
 2. 点击这里安装 [网易云歌单逆序脚本](https://github.com/hiroi-sora/NeteaseCloudMusic-SongList-Reverse/raw/main/%E7%BD%91%E6%98%93%E4%BA%91%E6%AD%8C%E5%8D%95%E9%80%86%E5%BA%8F.user.js) 。
+3. 或者[从greasyfork安装](https://greasyfork.org/en/scripts/448475-%E7%BD%91%E6%98%93%E4%BA%91%E6%AD%8C%E5%8D%95%E9%80%86%E5%BA%8F%E5%99%A8)
 
 ## 使用方法
 
